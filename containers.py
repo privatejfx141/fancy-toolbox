@@ -47,7 +47,7 @@ class Container(object):
         Return the item at index_peek from this container.
         '''
         if self.is_empty():
-            raise EmptyContainerError(self.__class__.__name__ + ' is empty.')
+            raise EmptyContainerError(self.__class__.__name__ + ' is empty')
         return self._items[index_peek]
 
     def _get(self, index_pop=FIRST_ELEMENT_INDEX):
@@ -56,8 +56,15 @@ class Container(object):
         Return and remove the item at index_pop from this container.
         '''
         if self.is_empty():
-            raise EmptyContainerError(self.__class__.__name__ + ' is empty.')
+            raise EmptyContainerError(self.__class__.__name__ + ' is empty')
         return self._items.pop(index_pop)
+
+    def clear(self):
+        '''(Container) -> NoneType
+
+        Remove all the objects in this container.
+        '''
+        self._items = list()
 
     def size(self):
         '''(Container) -> int
@@ -77,7 +84,7 @@ class Container(object):
 class Bucket(Container):
     '''A class to represent a Bucket, container that contains 1 object.'''
 
-    def __init__(self):
+    def __init__(self, item=tuple()):
         '''(Bucket) -> NoneType
 
         Create an empty bucket.
@@ -90,7 +97,7 @@ class Bucket(Container):
         Set the list representation of this bucket.
         '''
         if len(new_list) > 1:
-            raise FullContainerError('Number of items in list is invalid.')
+            raise FullContainerError('number of items in list is invalid')
         Container._set_list(self, new_list)
 
     def put(self, new_item):
@@ -99,7 +106,7 @@ class Bucket(Container):
         Fill this bucket with a new item.
         '''
         if not self.is_empty():
-            raise FullContainerError('Bucket already has an item.')
+            raise FullContainerError('Bucket already has an item')
         self._put(new_item)
 
     def peek(self):
@@ -174,8 +181,48 @@ class Queue(Container):
         return self._get(FIRST_ELEMENT_INDEX)
 
 
+class Deque(Container):
+    '''A class to represent a Deque, double-ended queue.'''
+
+    def __init__(self):
+        '''(Deque) -> NoneType
+
+        Create an empty deque.
+        '''
+        Container.__init__(self)
+
+    def add_front(self, new_item):
+        '''(Deque, object) -> NoneType
+
+        Add a new item to the front of this deque.
+        '''
+        self._put(new_item)
+
+    def add_rear(self, new_item):
+        '''(Deque, object) -> NoneType
+
+        Add a new item to the rear of this deque.
+        '''
+        self._items.insert(FIRST_ELEMENT_INDEX, new_item)
+
+    def remove_front(self):
+        '''(Deque, object) -> NoneType
+
+        Remove and return the front item from this deque.
+        '''
+        return self._get(self, LAST_ELEMENT_INDEX)
+
+    def remove_rear(self):
+        '''(Deque, object) -> NoneType
+
+        Remove and return the rear item from this deque.
+        '''
+        return self._get(self, FIRST_ELEMENT_INDEX)
+
+
 if (__name__ == '__main__'):
     import doctest
     bucket = Bucket()
     stack = Stack()
     queue = Queue()
+    deque = Deque()
