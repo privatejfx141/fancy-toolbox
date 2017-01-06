@@ -1,19 +1,54 @@
+from math import *
+
+
 def factorial(n):
     '''(int) -> int
+
+    Return the factorial of n; Return n!.
+    This function can be written in one single line as:
+        return n if (n == 1) else (n * factorial(n-1))
+
+    REQ: n >= 0
+
+    >>> factorial(0)
+    1
+    >>> factorial(1)
+    1
+    >>> factorial(5)
+    120
     '''
-    return n if (n == 1) else (n * factorial(n-1))
+    # Base case: n = 0 or 1 returns 1, since 0! and 1! both equal 1.
+    if (n <= 1):
+        result = 1
+    # Recursive decomposition: n - 1 approach.
+    else:
+        result = n * factorial(n-1)
+    # Return the result.
+    return result
 
 
 def fibonacci(n):
     '''(int) -> int
-    '''
-    return n if (n <= 1) else (fibonacci(n-1) + fibonacci(n-2))
 
+    Return the n-th term in the fibonacci sequence, assuming the first term is 1.
+    This function can be written in one single line as:
+        return n if (n <= 1) else (fibonacci(n-1) + fibonacci(n-2))
 
-def fib(n):
-    '''(int) -> int
+    REQ: n >= 0
+
+    >>> fibonacci(0)
+    1
+    >>> fibonacci(1)
+    1
+    >>> fibonacci(8)
+    21
     '''
-    return fibonacci(n)
+    # Base cases: n = 0,1 returns 1, since first two terms are 1s.
+    if (n <= 1):
+        result = 1
+    # Recursive decomposition: n-1 and n-2 approach.
+    else:
+        result = fibonacci(n-1) + fibonacci(n-2)
 
 
 def triangular_num(n):
