@@ -1,5 +1,7 @@
 def seq3np1(n):
-    """ Print the 3n+1 sequence from n, terminating when it reaches 1."""
+    '''(int) -> int
+    Print the 3n+1 sequence from n, terminating when it reaches 1.
+    '''
     count = 0
     while n != 1:
         #print(n)
