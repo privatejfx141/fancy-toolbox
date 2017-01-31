@@ -2,7 +2,7 @@
  * <code>LinkedList</code> is an implementation of a pythonic linked list ADT.
  * 
  * @author Jeffrey L.
- * @version 1.6
+ * @version 1.1
  * @since 2017-01-26
  */
 public class LinkedList {
@@ -16,7 +16,11 @@ public class LinkedList {
 	 * @since 2017-01-26
 	 */
 	protected class Node {
-		// linked node with data.
+		/*
+		 * Representation invariant:
+		 * data is an object.
+		 * nextNode is the pointer to the next node.
+		 */
 		Object data;
 		Node nextNode;
 		/**
@@ -34,7 +38,7 @@ public class LinkedList {
 		}
 	}
 
-	private Node head;
+	protected Node head;
 	protected final int lastIndex = -1;
 
 	/**
@@ -42,9 +46,17 @@ public class LinkedList {
 	 * 
 	 * @param datas unlimited arguments of item <code>Object</code>s to initialize with.
 	 */
-	LinkedList(Object... datas) {
-		// create a linked list with a head.
-		for (Object data : datas) {
+	LinkedList(Object... values) {
+		/*
+		 * Representation invariant:
+		 * values is a varargs of objects,
+		 * which are to be the items stored in me.
+		 * size() is the number of items in me.
+		 * if size() > 0 then,
+		 *   head is the first Node in me.
+		 *   tail() is the last Node in me.
+		 */
+		for (Object data : values) {
 			append(data);
 		}
 	}
@@ -415,6 +427,24 @@ public class LinkedList {
 	public boolean isEmpty() {
 		// if the head is null, the list is empty
 		return (head == null);
+	}
+	
+}
+
+
+class CLList extends LinkedList {
+	
+	CLList(Object... items) {
+		super(items);
+	}
+	
+	public void append(Object item) {
+		super.append(item);
+		tail().nextNode = head;
+	}
+	
+	public void insert(int index, Object item) {
+		
 	}
 	
 }
