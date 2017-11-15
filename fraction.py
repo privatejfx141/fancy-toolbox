@@ -1,6 +1,8 @@
 """This module contains a basic implementaton of a fraction class.
 
 Author: Jeffrey Li
+Created: January 7, 2017
+Modified: November 12, 2017
 Software Engineering
 University of Toronto
 """
@@ -20,6 +22,8 @@ class Fraction(object):
         """(Fraction, int or Fraction, int or Fraction) -> NoneType
 
         Creates a fraction with a numerator and denominator.
+
+        REQ: denominator != 0
         """
         if denominator == 0:
             raise ValueError("denominator cannot be zero")
@@ -38,6 +42,8 @@ class Fraction(object):
         """(int[, int]) -> Fraction
 
         Converts the given integer to a fraction with the set denominator.
+
+        REQ: denominator != 0
         """
         if denominator == 0:
             raise ValueError("denominator cannot be zero")
@@ -260,6 +266,8 @@ class Fraction(object):
         """(Fraction, int or Fraction):
 
         Fixes the denominator of this fraction to a specific value.
+
+        REQ: denominator != 0
         """
         new_n = self._n * Fraction(denominator, self._d)
         return Fraction(new_n, denominator)
@@ -271,3 +279,5 @@ if __name__ == '__main__':
     b2 = b.set_denominator(2)
     print(b, "=", b2)
     print(b.decimal(), b2.decimal())
+
+    print(1 * Fraction(3, 2))

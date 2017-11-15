@@ -1,6 +1,8 @@
 """This module contains a nested list implementation of a matrix.
 
 Author: Jeffrey Li
+Created: January 7, 2017
+Modified: November 12, 2017
 Software Engineering
 University of Toronto
 """
@@ -54,6 +56,9 @@ class Matrix(object):
             row_vectors_list.append(Vector(*row))
         return iter(row_vectors_list)
 
+    def __abs__(self):
+        return self.determinant()
+
     def __add__(self, other):
         if not self.same_dimensions(other):
             raise ValueError("matrices must have the same dimensions")
@@ -79,7 +84,10 @@ class Matrix(object):
                 prod_m.append(prod_row)
         # matrix-vector multiplication
         elif isinstance(other, Vector):
-            pass
+            prod_v = prod_m
+            for row_vector in self:
+                prod_v.append(row_vector * other)
+            return Vector(*prod_v)
         # scalar multiplication
         else:
             for row in self._m:
@@ -98,6 +106,8 @@ class Matrix(object):
         for i in range(power):
             prod_m = prod_m.__mul__(self)
         return prod_m
+
+    # <!-- basic operations -->
 
     def rows(self):
         """(Matrix) -> int
@@ -140,6 +150,9 @@ class Matrix(object):
         """(Matrix, int, int[, bool]) -> Number
 
         Returns the number at the given row and column position in this matrix.
+
+        REQ: 1 <= row_pos <= self.rows()
+        REQ: 1 <= col_pos <= self.columns()
         """
         if by_index:
             return self._m[row_pos][col_pos]
@@ -150,6 +163,8 @@ class Matrix(object):
         """(Matrix, int) -> Vector
 
         Returns the row vector at the given row position.
+
+        REQ: 1 <= position <= self.rows()
         """
         return Vector(*self._m[position-1])
 
@@ -157,6 +172,8 @@ class Matrix(object):
         """(Matrix, int) -> Vector
 
         Returns the column vector at the given column position.
+
+        REQ: 1 <= position <= self.columns()
         """
         col_values = list()
         for row in self._m:
@@ -173,12 +190,15 @@ class Matrix(object):
             col_vectors.append(self.column_vector(cindex+1))
         return Matrix(*col_vectors)
 
-    # matrix modifiers
+    # <!-- matrix modifiers -->
 
     def add_row(self, row, pos=None):
         """(Matrix, list or Vector[, int]) -> Matrix
 
         Returns the modified matrix that is the given row added to this matrix.
+
+        REQ: len(row) == self.cols()
+        REQ: 1 <= pos <= self.rows()
         """
         if len(row) != self._cols:
             raise ValueError("incorrect number of values for row")
@@ -193,6 +213,9 @@ class Matrix(object):
         """(Matrix, list or Vector[, int]) -> Matrix
 
         Returns the modified matrix that is the given column added to this matrix.
+
+        REQ: len(col) == self.rows()
+        REQ: 1 <= pos <= self.columns()
         """
         if len(col) != self._rows:
             raise ValueError("incorrect number of values for column")
@@ -209,6 +232,8 @@ class Matrix(object):
         """(Matrix, list or Vector[, int]) -> Matrix
 
         Returns the modified matrix that is the row removed from this matrix.
+
+        REQ: 1 <= pos <= self.rows()
         """
         new_m = self._m.copy()
         new_m.pop(pos-1)
@@ -218,37 +243,61 @@ class Matrix(object):
         """(Matrix, list or Vector[, int]) -> Matrix
 
         Returns the modified matrix that is the column removed from this matrix.
+
+        REQ: 1 <= pos <= self.columns()
         """
         new_m = [row.copy() for row in self._m]
         for i in range(self._rows):
             new_m[i] = new_m[i][:pos-1] + new_m[i][pos:]
         return Matrix(*new_m)
 
-    # elementary row operations
+    # <!-- elementary row operations -->
 
     def row_interchange(self, pos1, pos2):
-        row_vectors = [Vector(*row) for row in self._m]
+        """(Matrix, int, int) -> Matrix
+
+        Returns the matrix with the given row interchange operation.
+
+        REQ: 1 <= pos1, pos2 <= self.rows()
+        """
+        row_vectors = [row for row in self._m]
         temp = row_vectors[pos1-1]
         row_vectors[pos1-1] = row_vectors[pos2-1]
         row_vectors[pos2-1] = temp
         return Matrix(*row_vectors)
 
     def row_multiply(self, pos, mult):
+        """(Matrix, int, Number) -> Matrix
+
+        Returns the matrix with the given row multiplication operation.
+
+        REQ: 1 <= pos <= self.rows()
+        """
         row_vectors = [Vector(*row) for row in self._m]
         row_vectors[pos-1] = row_vectors[pos-1] * mult
         return Matrix(*row_vectors)
 
     def row_add_multiple(self, pos1, pos2, mult2):
+        """(Matrix, int, int, Number) -> Matrix
+
+        Returns the matrix with the given row multiple addition operation.
+
+        REQ: 1 <= pos1, pos2 <= self.rows()
+        """
         row_vectors = [Vector(*row) for row in self._m]
         adder = row_vectors[pos2-1] * mult2
         row_vectors[pos1-1] = row_vectors[pos1-1] + adder
         return Matrix(*row_vectors)
+
+    # <!-- row echelon form operations -->
 
     def reduced_row_echelon_form(self):
         """(Matrix) -> Matrix
 
         Returns the reduced row echelon form that is row equivalent
         to this matrix.
+
+        Credits: https://rosettacode.org/wiki/Reduced_row_echelon_form
         """
         result = self
         lead = 0
@@ -274,28 +323,70 @@ class Matrix(object):
             lead += 1
         return result
 
-    # determinant operations
+    def rank(self):
+        """(Matrix) -> int
+
+        Returns the rank of this matrix.
+        """
+        return self._cols - self.nullity()
+
+    def nullity(self):
+        """(Matrix) -> int
+
+        Returns the nullity of this matrix.
+        """
+        nullity = 0
+        rref = self.reduced_row_echelon_form()
+        for row_vector in rref:
+            if row_vector.is_zero():
+                nullity += 1
+        return nullity
+
+    # <!-- determinant operations -->
 
     def determinant(self):
+        """(Matrix) -> Number
+
+        Returns the determinant of this matrix.
+        """
         if not self.is_square():
             raise ValueError("matrix must be a square matrix")
         det = 0
         if self._rows == 1:
-            det = self.get(1,1)
+            det = self.get(1, 1)
         elif self._rows == 2:
-            det = self.get(1,1)*self.get(2,2) - self.get(1,2)*self.get(2,1)
+            det = self.get(1, 1)*self.get(2, 2) - self.get(1, 2)*self.get(2, 1)
         else:
             for cindex in range(self._cols):
                 det += self.get(1, cindex+1) * self.cofactor(1, cindex+1)
         return det
 
-    def minor(self, row, column):
-        return self.remove_row(row).remove_column(column).determinant()
+    def minor(self, row_pos, col_pos):
+        """(Matrix) -> Number
 
-    def cofactor(self, row, column):
-        return (-1)**(row+column) * self.minor(row, column)
+        Returns the minor at the given positions of this matrix.
+
+        REQ: 1 <= row_pos <= self.rows()
+        REQ: 1 <= col_pos <= self.columns()
+        """
+        return self.remove_row(row_pos).remove_column(col_pos).determinant()
+
+    def cofactor(self, row_pos, col_pos):
+        """(Matrix) -> Number
+
+        Returns the cofactor at the given positions of this matrix.
+
+        REQ: 1 <= row_pos <= self.rows()
+        REQ: 1 <= col_pos <= self.columns()
+        """
+        return (-1)**(row_pos+col_pos) * self.minor(row_pos, col_pos)
 
     def adjugate(self):
+        """(Matrix) -> Matrix
+
+        Returns the adjugate of this matrix, where:
+            adj(A) = cofactor(A)^T
+        """
         cofactor_mtx = list()
         for i in range(self._rows):
             cofactor_row = list()
@@ -305,15 +396,44 @@ class Matrix(object):
         return Matrix(*cofactor_mtx).transpose()
 
     def inverse(self):
+        """(Matrix) -> bool
+
+        Returns the inverse of this matrix.
+        """
         det = self.determinant()
         if det == 0:
             raise ValueError("matrix is not invertible")
         return self.adjugate() * (1/det)
 
+    # <!-- boolean operations -->
+
     def is_square(self):
+        """(Matrix) -> bool
+
+        Returns True iff this matrix is a square matrix.
+        This is used to check if the determinant can be calculated.
+        """
         return self._rows == self._cols
 
+    def is_singular(self):
+        """(Matrix) -> bool
+
+        Returns True iff this matrix is singular (not invertible).
+        """
+        if not self.is_square():
+            raise ValueError("matrix must be a square matrix")
+        return self.determinant() == 0
+
+    # <!-- complex operations -->
+
     def solve_for_x(self, vector_b):
+        """(Matrix, Vector) -> Vector
+
+        Returns the vector x given the vector b, such that the equation is satisfied:
+            Ax = b
+
+        REQ: len(vector_b) == self.rows()
+        """
         if self._rows != vector_b.dimension():
             raise ValueError("vector must have same dimensions as this matrix's rows")
         augmented = self.add_column(vector_b)
@@ -323,9 +443,10 @@ class Matrix(object):
 
 if __name__ == "__main__":
     matrix_a = Matrix([1, 1, 1], [0, 2, 5], [2, 5, -1])
-    vector_x = matrix_a.solve_for_x(Vector(6, -4, 27))
+    vector_b = Vector(6, -4, 27)
+    vector_x = matrix_a.solve_for_x(vector_b)
+    inverse_a = matrix_a.inverse()
 
-    print(matrix_a)
-    print(matrix_a.determinant())
-    print(matrix_a.inverse() * matrix_a)
+    print(inverse_a * vector_b)
     print(vector_x)
+    print(Matrix([2, 6], [1, 3]).determinant())

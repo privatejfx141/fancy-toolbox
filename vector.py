@@ -1,6 +1,8 @@
 """This module contains a basic list implementation of a vector.
 
 Author: Jeffrey Li
+Created: January 7, 2017
+Modified: November 12, 2017
 Software Engineering
 University of Toronto
 """
@@ -59,6 +61,11 @@ class Vector(object):
         """(Vector, int[, bool]) -> int
 
         Returns the value in this vector at the given position.
+
+        REQ: if by_index:
+                0 <= position <= self.dimension() - 1
+             otherwise:
+                1 <= position <= self.dimension()
         """
         if by_index:
             return self._v[position]
@@ -104,6 +111,8 @@ class Vector(object):
         """(Vector, Vector) -> int
 
         Returns the dot product of the two vectors.
+
+        REQ: self.dimension() == other.dimension()
         """
         if self._n != other.dimension():
             raise ValueError("dimensions of both vectors must be equal")
@@ -116,6 +125,8 @@ class Vector(object):
         """(Vector, Vector) -> float
 
         Returns the angle between the two vectors.
+
+        REQ: self.dimension() == other.dimension()
         """
         dot_prod = self.dot_product(other)
         norm_prod = self.norm() * other.norm()
@@ -125,6 +136,8 @@ class Vector(object):
         """(Vector, Vector) -> Vector
 
         Returns the cross product of the two vectors.
+
+        REQ: self.dimension() == other.dimension() == 3
         """
         a1, a2, a3 = self._v
         b1, b2, b3 = other.get(1), other.get(2), other.get(3)
@@ -134,6 +147,10 @@ class Vector(object):
         return Vector(n1, n2, n3)
 
     def is_zero(self):
+        """(Vector) -> bool
+
+        Returns True iff this vector is the zero vector.
+        """
         for value in self._v:
             if value != 0:
                 return False

@@ -1,6 +1,8 @@
 """This module contains a basic implementaton of a complex number class.
 
 Author: Jeffrey Li
+Created: January 7, 2017
+Modified: November 12, 2017
 Software Engineering
 University of Toronto
 """
