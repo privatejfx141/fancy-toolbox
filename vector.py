@@ -11,7 +11,7 @@ class Vector(object):
     """A class to represent a vector in Euclidean n-space."""
 
     @staticmethod
-    def zero_vector(dimension):
+    def zero(dimension):
         """(int) -> Vector
 
         Returns a zero vector in the given dimension.
@@ -133,6 +133,11 @@ class Vector(object):
         n3 = a1 * b2 - a2 * b1
         return Vector(n1, n2, n3)
 
+    def is_zero(self):
+        for value in self._v:
+            if value != 0:
+                return False
+        return True
 
 if __name__ == "__main__":
     v = Vector(1, 2, 3)

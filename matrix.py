@@ -196,7 +196,7 @@ class Matrix(object):
         """
         if len(col) != self._rows:
             raise ValueError("incorrect number of values for column")
-        new_m = self._m.copy()
+        new_m = [row.copy() for row in self._m]
         if pos:
             for i, value in enumerate(col):
                 new_m[i] = new_m[i][:pos-1] + [value] + new_m[i][pos-1:]
@@ -219,7 +219,7 @@ class Matrix(object):
 
         Returns the modified matrix that is the column removed from this matrix.
         """
-        new_m = self._m.copy()
+        new_m = [row.copy() for row in self._m]
         for i in range(self._rows):
             new_m[i] = new_m[i][:pos-1] + new_m[i][pos:]
         return Matrix(*new_m)
@@ -280,8 +280,13 @@ class Matrix(object):
         if not self.is_square():
             raise ValueError("matrix must be a square matrix")
         det = 0
-        if self._rows == 2:
+        if self._rows == 1:
+            det = self.get(1,1)
+        elif self._rows == 2:
             det = self.get(1,1)*self.get(2,2) - self.get(1,2)*self.get(2,1)
+        else:
+            for cindex in range(self._cols):
+                det += self.get(1, cindex+1) * self.cofactor(1, cindex+1)
         return det
 
     def minor(self, row, column):
@@ -290,22 +295,37 @@ class Matrix(object):
     def cofactor(self, row, column):
         return (-1)**(row+column) * self.minor(row, column)
 
-    def cofactor_matrix(self):
-        pass
-    
     def adjugate(self):
-        pass
+        cofactor_mtx = list()
+        for i in range(self._rows):
+            cofactor_row = list()
+            for j in range(self._cols):
+                cofactor_row.append(self.cofactor(i+1, j+1))
+            cofactor_mtx.append(cofactor_row)
+        return Matrix(*cofactor_mtx).transpose()
 
     def inverse(self):
-        if self.determinant() == 0:
+        det = self.determinant()
+        if det == 0:
             raise ValueError("matrix is not invertible")
-        pass
+        return self.adjugate() * (1/det)
 
     def is_square(self):
         return self._rows == self._cols
 
+    def solve_for_x(self, vector_b):
+        if self._rows != vector_b.dimension():
+            raise ValueError("vector must have same dimensions as this matrix's rows")
+        augmented = self.add_column(vector_b)
+        rref = augmented.reduced_row_echelon_form()
+        return rref.column_vector(self._cols+1)
+
 
 if __name__ == "__main__":
-    mtx = Matrix([1, 2, 3], [4, 5, 6], [7, 8, 8])
-    mtx2 = mtx.add_column([1, 2, 3], 3)
-    print(mtx.remove_row(3).remove_column(3))
+    matrix_a = Matrix([1, 1, 1], [0, 2, 5], [2, 5, -1])
+    vector_x = matrix_a.solve_for_x(Vector(6, -4, 27))
+
+    print(matrix_a)
+    print(matrix_a.determinant())
+    print(matrix_a.inverse() * matrix_a)
+    print(vector_x)

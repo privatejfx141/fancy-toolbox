@@ -133,6 +133,9 @@ class Fraction(object):
         else:
             return Fraction(new_n, new_d).simplify()
 
+    def __radd__(self, other):
+        return self.__add__(other)
+
     def __mul__(self, other):
         new_n = num = self._n
         new_d = den = self._d
