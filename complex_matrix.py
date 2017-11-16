@@ -92,6 +92,10 @@ def examples():
     print("\nHermitian adjoint A*:")
     print(mtx_a.hermitian_adjoint())
 
+    print(
+        # end of example
+    )
+
 
 if __name__ == "__main__":
     examples()

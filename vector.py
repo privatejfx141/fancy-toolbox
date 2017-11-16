@@ -41,14 +41,24 @@ class Vector(object):
         return self.norm()
 
     def __add__(self, other):
-        values = [self._v[i] + other.get(i+1) for i in range(self._n)]
+        values = list()
+        for i in range(self._n):
+            add = self._v[i] + other.get(i+1)
+            if isinstance(add, float) and add.is_integer():
+                add = int(add)
+            values.append(add)
         return Vector(*values)
 
     def __mul__(self, other):
         if isinstance(other, Vector):
             return self.dot_product(other)
         else:
-            values = [self._v[i] * other for i in range(self._n)]
+            values = list()
+            for i in range(self._n):
+                prod = self._v[i] * other
+                if isinstance(prod, float) and prod.is_integer():
+                    prod = int(prod)
+                values.append(prod)
             return Vector(*values)
 
     def __rmul__(self, other):
@@ -168,6 +178,10 @@ class Vector(object):
                 return False
         return True
 
+    print(
+        # end of example
+    )
+
 
 def examples():
     """() -> NoneType
@@ -203,6 +217,7 @@ def examples():
     print(vect_v.angle(vect_u), "radians")
     print("\nCross product vxu:")
     print(vect_v.cross_product(vect_u))
+
 
 if __name__ == "__main__":
     examples()

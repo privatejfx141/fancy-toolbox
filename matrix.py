@@ -133,6 +133,9 @@ class Matrix(object):
                 return True
         return False
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     # <!-- basic operations -->
 
     def rows(self):
@@ -286,6 +289,8 @@ class Matrix(object):
 
         REQ: 1 <= pos1, pos2 <= self.rows()
         """
+        if pos1 == pos2:
+            return self
         row_vectors = [row for row in self._m]
         temp = row_vectors[pos1-1]
         row_vectors[pos1-1] = row_vectors[pos2-1]
@@ -299,8 +304,10 @@ class Matrix(object):
 
         REQ: 1 <= pos <= self.rows()
         """
+        if mult == 1:
+            return self
         row_vectors = [Vector(*row) for row in self._m]
-        row_vectors[pos-1] = row_vectors[pos-1] * mult
+        row_vectors[pos-1] *= mult
         return Matrix(*row_vectors)
 
     def row_add_multiple(self, pos1, pos2, mult2):
@@ -311,11 +318,39 @@ class Matrix(object):
         REQ: 1 <= pos1, pos2 <= self.rows()
         """
         row_vectors = [Vector(*row) for row in self._m]
-        adder = row_vectors[pos2-1] * mult2
-        row_vectors[pos1-1] = row_vectors[pos1-1] + adder
+        row_vectors[pos1-1] += row_vectors[pos2-1] * mult2
         return Matrix(*row_vectors)
 
     # <!-- row echelon form operations -->
+
+    def _rref(self, all_steps=False):
+        steps = [self]
+        result = self
+        lead = 0
+        for r in range(self._rows):
+            if lead >= self._cols:
+                return steps if all_steps else result
+            i = r
+            while result.get(i, lead, True) == 0:
+                i += 1
+                if i == self._rows:
+                    i = r
+                    lead += 1
+                    if self._cols == lead:
+                        # return the matrix in RREF
+                        return steps if all_steps else result
+            result = result.row_interchange(i+1, r+1)
+            steps.append(result)
+            lv = result.get(r, lead, True)
+            result = result.row_multiply(r+1, 1/lv)
+            steps.append(result)
+            for i in range(self._rows):
+                if i != r:
+                    lv = result.get(i, lead, True)
+                    result = result.row_add_multiple(i+1, r+1, -lv)
+                    steps.append(result)
+            lead += 1
+        return result
 
     def reduced_row_echelon_form(self):
         """(Matrix) -> Matrix
@@ -325,29 +360,21 @@ class Matrix(object):
 
         Credits: https://rosettacode.org/wiki/Reduced_row_echelon_form
         """
-        result = self
-        lead = 0
-        for r in range(self._rows):
-            if lead >= self._cols:
-                return result
-            i = r
-            while result.get(i, lead, True) == 0:
-                i += 1
-                if i == self._rows:
-                    i = r
-                    lead += 1
-                    if self._cols == lead:
-                        # return the matrix in RREF
-                        return result
-            result = result.row_interchange(i+1, r+1)
-            lv = result.get(r, lead, True)
-            result = result.row_multiply(r+1, 1/float(lv))
-            for i in range(self._rows):
-                if i != r:
-                    lv = result.get(i, lead, True)
-                    result = result.row_add_multiple(i+1, r+1, -lv)
-            lead += 1
-        return result
+        return self._rref(all_steps=False)
+
+    def rref_all_steps(self):
+        """(Matrix) -> list of Matrix
+
+        Returns all the steps in reducing this matrix to reduced row echelon form.
+        """
+        rref_all_steps = self._rref(all_steps=True)
+        rref_main_steps = [self]
+        prev_step = self
+        for step in rref_all_steps:
+            if step != prev_step:
+                rref_main_steps.append(step)
+            prev_step = step
+        return rref_main_steps
 
     def rank(self):
         """(Matrix) -> int
@@ -521,6 +548,11 @@ def examples():
     print(vtr_b)
     print("\nResult vector x:")
     print(vtr_x)
+
+    print(
+        # end of example
+    )
+
 
 if __name__ == "__main__":
     examples()
