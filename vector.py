@@ -25,6 +25,9 @@ class Vector(object):
         self._v = list(values)
         self._n = len(values)
 
+    def __hash__(self):
+        return hash(tuple(self._v))
+
     def __len__(self):
         return self._n
 
@@ -32,7 +35,7 @@ class Vector(object):
         return iter(self._v)
 
     def __repr__(self):
-        return str(self._v)
+        return "V{}".format(str(self._v))
 
     def __abs__(self):
         return self.norm()
@@ -56,6 +59,15 @@ class Vector(object):
 
     def __pow__(self, other):
         return self.cross_product(other)
+
+    def __eq__(self, other):
+        if isinstance(other, Vector):
+            if self.dimension() == other.dimension():
+                for i in range(self._n):
+                    if self._v[i] != other.get(i+1):
+                        return False
+                return True
+        return False
 
     def get(self, position, by_index=False):
         """(Vector, int[, bool]) -> int
@@ -156,7 +168,41 @@ class Vector(object):
                 return False
         return True
 
+
+def examples():
+    """() -> NoneType
+
+    Displays examples of vector operations.
+    """
+    vect_v = Vector(8, -5, 7)
+    vect_u = Vector(12, 6, -19)
+
+    print("\nEuclidean vector v:")
+    print(vect_v)
+
+    # single vector operations
+    print("\n> Unary vector operations:")
+    print("-" * 40)
+    print("\nScalar multiplication v*2:")
+    print(vect_v * 2)
+    print("\nNorm |v|:")
+    print(vect_v.norm())
+    print("\nUnit vector v/|v|:")
+    print(vect_v.unit())
+
+    # binary vector operations
+    print("\n> Binary vector operations:")
+    print("-" * 40)
+    print("\nEuclidean vector u:")
+    print(vect_u)
+    print("\nVector addition v+u:")
+    print(vect_v + vect_u)
+    print("\nDot product v*u:")
+    print(vect_v * vect_u)
+    print("\nAngle arccos((v*u)/(|v|*|u|)):")
+    print(vect_v.angle(vect_u), "radians")
+    print("\nCross product vxu:")
+    print(vect_v.cross_product(vect_u))
+
 if __name__ == "__main__":
-    v = Vector(1, 2, 3)
-    w = Vector(5, 8, 4)
-    print(v.unit())
+    examples()

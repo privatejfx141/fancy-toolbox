@@ -13,6 +13,13 @@ class Matrix(object):
     """A class to represent a matrix."""
 
     @staticmethod
+    def _pivot_position(vector):
+        for pos in range(vector.dimension(), 0, -1):
+            if vector.get(pos) != 0:
+                return pos
+        return vector.dimension()
+
+    @staticmethod
     def zero(rows, columns=None):
         """(int[, int]) -> Matrix
 
@@ -42,6 +49,16 @@ class Matrix(object):
         self._m = list()
         for row in rows:
             self._m.append(list(row))
+
+    def __hash__(self):
+        row_vector_hashes = list()
+        for row_vector in self:
+            row_vector_hashes.append(hash(row_vector))
+        return hash(tuple(row_vector_hashes))
+
+    def __repr__(self):
+        str_m = str(self._m)[1:-1]
+        return "M({})".format(str_m)
 
     def __str__(self):
         str_m = list()
@@ -106,6 +123,15 @@ class Matrix(object):
         for i in range(power):
             prod_m = prod_m.__mul__(self)
         return prod_m
+
+    def __eq__(self, other):
+        if isinstance(other, Matrix):
+            if self.same_dimensions(other):
+                for i in range(self._rows):
+                    if self.row_vector(i+1) != other.row_vector(i+1):
+                        return False
+                return True
+        return False
 
     # <!-- basic operations -->
 
@@ -440,13 +466,61 @@ class Matrix(object):
         rref = augmented.reduced_row_echelon_form()
         return rref.column_vector(self._cols+1)
 
+    def row_space(self):
+        """(Matrix) -> set of Vector
+
+        Returns the basis of the row space of this matrix.
+        """
+        rref = self.reduced_row_echelon_form()
+        row_space = {self.row_vector(i+1) for i, row_v in enumerate(rref) if not row_v.is_zero()}
+        return row_space
+
+    def column_space(self):
+        """(Matrix) -> set of Vector
+
+        Returns the basis of the column space of this matrix.
+        """
+        col_space = set()
+        rref = self.reduced_row_echelon_form()
+        column_vectors = [rref.column_vector(i+1) for i in range(self._cols)]
+        prev_pivot_pos = -1
+        for col_vector in column_vectors:
+            pivot_pos = Matrix._pivot_position(col_vector)
+            if pivot_pos != prev_pivot_pos:
+                col_space.add(col_vector)
+            prev_pivot_pos = pivot_pos
+        return col_space
+
+
+def examples():
+    """() -> NoneType
+
+    Displays examples of matrix operations.
+    """
+    mtx_a = Matrix([1, 1, 1], [0, 2, 5], [2, 5, -1])
+    vtr_b = Vector(6, -4, 27)
+    vtr_x = mtx_a.solve_for_x(vtr_b)
+
+    print("\nMatrix A:")
+    print(mtx_a)
+
+    # single matrix operations
+    print("\n> Single matrix operations")
+    print("-" * 40)
+    print("\nMatrix transpose A^T:")
+    print(mtx_a.transpose())
+    print("\nMatrix inverse A^(-1):")
+    print(mtx_a.inverse())
+    print("\nReduced row echelon form H ~ A:")
+    print(mtx_a.reduced_row_echelon_form())
+
+    # solving for vector x
+    print("\n> Ax = b, solving for x")
+    print("-" * 40)
+    print("\nVector b:")
+    print(vtr_b)
+    print("\nResult vector x:")
+    print(vtr_x)
 
 if __name__ == "__main__":
-    matrix_a = Matrix([1, 1, 1], [0, 2, 5], [2, 5, -1])
-    vector_b = Vector(6, -4, 27)
-    vector_x = matrix_a.solve_for_x(vector_b)
-    inverse_a = matrix_a.inverse()
-
-    print(inverse_a * vector_b)
-    print(vector_x)
-    print(Matrix([2, 6], [1, 3]).determinant())
+    examples()
