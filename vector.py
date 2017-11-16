@@ -9,6 +9,11 @@ University of Toronto
 
 from math import acos, sqrt
 
+
+class VectorDimensionError(Exception):
+    """An exception for invalid vector dimensions."""
+
+
 class Vector(object):
     """A class to represent a vector in Euclidean n-space."""
 
@@ -22,6 +27,10 @@ class Vector(object):
         return Vector(*values)
 
     def __init__(self, *values):
+        """(Vector, tuple of Number) -> NoneType
+
+        Create a Euclidean vector with the given values.
+        """
         self._v = list(values)
         self._n = len(values)
 
@@ -29,6 +38,10 @@ class Vector(object):
         return hash(tuple(self._v))
 
     def __len__(self):
+        """(Vector) -> int
+
+        See dimension().
+        """
         return self._n
 
     def __iter__(self):
@@ -41,6 +54,15 @@ class Vector(object):
         return self.norm()
 
     def __add__(self, other):
+        """(Vector, Vector) -> Vector
+
+        Returns the sum of the two vectors.
+
+        REQ: self.dimension == other.dimension
+        """
+        if self._n != other.dimension():
+            err_msg = "both vectors must have the same dimension for addition"
+            raise VectorDimensionError(err_msg)
         values = list()
         for i in range(self._n):
             add = self._v[i] + other.get(i+1)
@@ -50,6 +72,15 @@ class Vector(object):
         return Vector(*values)
 
     def __mul__(self, other):
+        """(Vector, Vector or Scalar) -> Vector or Number
+
+        Returns a product of this vector with another value.
+        If other is a...
+            Vector: returns the dot product.
+            Scalar: returns vector, result of scalar multiplication.
+
+        REQ: if other is vector, self.dimension == other.dimension
+        """
         if isinstance(other, Vector):
             return self.dot_product(other)
         else:
@@ -62,9 +93,19 @@ class Vector(object):
             return Vector(*values)
 
     def __rmul__(self, other):
+        """(Vector, Vector or Scalar) -> Vector or Number
+
+        See __mul__().
+        """
         return self.__mul__(other)
 
     def __sub__(self, other):
+        """(Vector, Vector) -> Vector
+
+        Returns the difference of the two vectors.
+
+        REQ: self.dimension == other.dimension
+        """
         return self.__add__(other.__mul__(-1))
 
     def __pow__(self, other):
@@ -130,18 +171,19 @@ class Vector(object):
         return Vector(*unit_values)
 
     def dot_product(self, other):
-        """(Vector, Vector) -> int
+        """(Vector, Vector) -> Number
 
         Returns the dot product of the two vectors.
 
         REQ: self.dimension() == other.dimension()
         """
         if self._n != other.dimension():
-            raise ValueError("dimensions of both vectors must be equal")
+            err_msg = "dimensions of both vectors must be equal"
+            raise VectorDimensionError(err_msg)
         result = 0
         for i in range(self._n):
             result += self._v[i] * other.get(i+1)
-        return result
+        return int(result) if int(result) == result else result
 
     def angle(self, other):
         """(Vector, Vector) -> float
@@ -161,6 +203,9 @@ class Vector(object):
 
         REQ: self.dimension() == other.dimension() == 3
         """
+        if self.dimension() != 3 and other.dimension() != 3:
+            err_msg = "vectors must be 3-dimensional to compute cross product"
+            raise VectorDimensionError(err_msg)
         a1, a2, a3 = self._v
         b1, b2, b3 = other.get(1), other.get(2), other.get(3)
         n1 = a2 * b3 - a3 * b2

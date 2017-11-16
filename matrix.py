@@ -7,7 +7,17 @@ Software Engineering
 University of Toronto
 """
 
+from fraction import Fraction
 from vector import Vector
+
+
+class MatrixDimensionError(Exception):
+    """An exception for invalid matrix dimensions."""
+
+
+class SingularMatrixError(Exception):
+    """An exception for invalid singular matrix operations."""
+
 
 class Matrix(object):
     """A class to represent a matrix."""
@@ -44,6 +54,10 @@ class Matrix(object):
         return Matrix(*identity_m)
 
     def __init__(self, *rows):
+        """(Matrix, tuple of iterable) -> NoneType
+
+        Creates a matrix with the given elements in the iterables.
+        """
         self._rows = len(rows)
         self._cols = len(rows[0])
         self._m = list()
@@ -77,8 +91,15 @@ class Matrix(object):
         return self.determinant()
 
     def __add__(self, other):
+        """(Matrix, Matrix) -> Matrix
+
+        Returns the sum of the two matrices.
+
+        REQ: self.dimensions == other.dimensions
+        """
         if not self.same_dimensions(other):
-            raise ValueError("matrices must have the same dimensions")
+            err_msg = "matrices must have the same dimensions"
+            raise MatrixDimensionError(err_msg)
         sum_m = list()
         for row_pos in range(self._rows):
             row1 = self.row_vector(row_pos+1)
@@ -87,13 +108,26 @@ class Matrix(object):
         return Matrix(*sum_m)
 
     def __mul__(self, other):
+        """(Matrix, Matrix or Scalar) -> Matrix or Vector
+
+        Returns a product of this matrix with another value.
+        If other is a...
+          Matrix: returns matrix, result of matrix multiplication.
+          Vector: returns vector, result of matrix-vector multiplication.
+          Scalar (int, float): returns matrix, result of scalar multiplication.
+
+        REQ: if other is matrix, self.rows == other.columns
+        REQ: if other is vector, self.rows == other.dimension
+        """
         prod_m = list()
         # matrix multiplication
         if isinstance(other, Matrix):
-            if not self.opposite_dimensions(other):
-                raise ValueError("matrices must have opposite dimensions")
+            if not self._rows == other.columns():
+                err_msg = "matrices must have opposite dimensions"
+                raise MatrixDimensionError(err_msg)
             row_vectors_a = [Vector(*row) for row in self._m]
-            col_vectors_b = [other.column_vector(i+1) for i in range(self._rows)]
+            col_vectors_b = [other.column_vector(
+                i+1) for i in range(other.columns())]
             for row_vector in row_vectors_a:
                 prod_row = list()
                 for col_vector in col_vectors_b:
@@ -112,17 +146,20 @@ class Matrix(object):
                 prod_m.append(row_vector * other)
         return Matrix(*prod_m)
 
-    def __sub__(self, other):
-        return self.__add__(other.__mul__(-1))
-
     def __rmul__(self, other):
         return self.__mul__(other)
+
+    def __sub__(self, other):
+        return self.__add__(other.__neg__())
 
     def __pow__(self, power):
         prod_m = self
         for i in range(power):
             prod_m = prod_m.__mul__(self)
         return prod_m
+
+    def __neg__(self):
+        return self.__mul__(-1)
 
     def __eq__(self, other):
         if isinstance(other, Matrix):
@@ -163,7 +200,8 @@ class Matrix(object):
         """(Matrix, Matrix) -> bool
 
         Returns True iff both matrices have the same dimension.
-        This is to check if both matrices are suitable for matrix addition.
+        This is to check if this matrix is suitable for matrix addition with
+        the other given matrix.
         """
         return self._rows == other.rows() and self._cols == other.columns()
 
@@ -171,7 +209,8 @@ class Matrix(object):
         """(Matrix, Matrix) -> bool
 
         Returns True iff both matrices have opposite dimensions.
-        This is to check if both matrices are suitable for matrix multiplication.
+        This is to check if this matrix is suitable for matrix multiplication
+        with the other given matrix.
         """
         return self._rows == other.columns() and self._cols == other.rows()
 
@@ -224,13 +263,14 @@ class Matrix(object):
     def add_row(self, row, pos=None):
         """(Matrix, list or Vector[, int]) -> Matrix
 
-        Returns the modified matrix that is the given row added to this matrix.
+        Returns the modified matrix that is the given row added to this matrix
+        at the row position (if given).
 
         REQ: len(row) == self.cols()
         REQ: 1 <= pos <= self.rows()
         """
         if len(row) != self._cols:
-            raise ValueError("incorrect number of values for row")
+            raise MatrixDimensionError("incorrect number of values for row")
         new_m = self._m.copy()
         if pos:
             new_m.insert(pos-1, row)
@@ -241,13 +281,14 @@ class Matrix(object):
     def add_column(self, col, pos=None):
         """(Matrix, list or Vector[, int]) -> Matrix
 
-        Returns the modified matrix that is the given column added to this matrix.
+        Returns the modified matrix that is the given column added to this
+        matrix at the column position (if given).
 
         REQ: len(col) == self.rows()
         REQ: 1 <= pos <= self.columns()
         """
         if len(col) != self._rows:
-            raise ValueError("incorrect number of values for column")
+            raise MatrixDimensionError("incorrect number of values for column")
         new_m = [row.copy() for row in self._m]
         if pos:
             for i, value in enumerate(col):
@@ -260,7 +301,8 @@ class Matrix(object):
     def remove_row(self, pos):
         """(Matrix, list or Vector[, int]) -> Matrix
 
-        Returns the modified matrix that is the row removed from this matrix.
+        Returns the modified matrix that is the row at the given row position
+        removed from this matrix.
 
         REQ: 1 <= pos <= self.rows()
         """
@@ -271,7 +313,8 @@ class Matrix(object):
     def remove_column(self, pos):
         """(Matrix, list or Vector[, int]) -> Matrix
 
-        Returns the modified matrix that is the column removed from this matrix.
+        Returns the modified matrix that is the column at the given column
+        position removed from this matrix.
 
         REQ: 1 <= pos <= self.columns()
         """
@@ -331,7 +374,7 @@ class Matrix(object):
             if lead >= self._cols:
                 return steps if all_steps else result
             i = r
-            while result.get(i, lead, True) == 0:
+            while result.get(i, lead, by_index=True) == 0:
                 i += 1
                 if i == self._rows:
                     i = r
@@ -341,13 +384,13 @@ class Matrix(object):
                         return steps if all_steps else result
             result = result.row_interchange(i+1, r+1)
             steps.append(result)
-            lv = result.get(r, lead, True)
-            result = result.row_multiply(r+1, 1/lv)
+            lv = result.get(r, lead, by_index=True)
+            result = result.row_multiply(r+1, Fraction(1, lv))
             steps.append(result)
             for i in range(self._rows):
                 if i != r:
-                    lv = result.get(i, lead, True)
-                    result = result.row_add_multiple(i+1, r+1, -lv)
+                    lv = result.get(i, lead, by_index=True)
+                    result = result.row_add_multiple(i+1, r+1, -1*lv)
                     steps.append(result)
             lead += 1
         return result
@@ -355,7 +398,7 @@ class Matrix(object):
     def reduced_row_echelon_form(self):
         """(Matrix) -> Matrix
 
-        Returns the reduced row echelon form that is row equivalent
+        Returns the matrix in reduced row echelon form that is row equivalent
         to this matrix.
 
         Credits: https://rosettacode.org/wiki/Reduced_row_echelon_form
@@ -365,7 +408,10 @@ class Matrix(object):
     def rref_all_steps(self):
         """(Matrix) -> list of Matrix
 
-        Returns all the steps in reducing this matrix to reduced row echelon form.
+        Returns all the steps (row equivalent matrices) in reducing this matrix
+        to reduced row echelon form.
+
+        Credits: https://rosettacode.org/wiki/Reduced_row_echelon_form
         """
         rref_all_steps = self._rref(all_steps=True)
         rref_main_steps = [self]
@@ -380,6 +426,8 @@ class Matrix(object):
         """(Matrix) -> int
 
         Returns the rank of this matrix.
+        The rank is calculated via the rank equation:
+            rank(A) = columns(A) - nullity(A)
         """
         return self._cols - self.nullity()
 
@@ -387,6 +435,8 @@ class Matrix(object):
         """(Matrix) -> int
 
         Returns the nullity of this matrix.
+        The nullity is calculated via the rank equation:
+            nullity(A) = columns(A) - rank(A)
         """
         nullity = 0
         rref = self.reduced_row_echelon_form()
@@ -401,9 +451,11 @@ class Matrix(object):
         """(Matrix) -> Number
 
         Returns the determinant of this matrix.
+
+        REQ: matrix must be a square
         """
         if not self.is_square():
-            raise ValueError("matrix must be a square matrix")
+            raise MatrixDimensionError("matrix must be a square matrix")
         det = 0
         if self._rows == 1:
             det = self.get(1, 1)
@@ -439,6 +491,8 @@ class Matrix(object):
 
         Returns the adjugate of this matrix, where:
             adj(A) = cofactor(A)^T
+
+        REQ: matrix must be a square
         """
         cofactor_mtx = list()
         for i in range(self._rows):
@@ -452,11 +506,13 @@ class Matrix(object):
         """(Matrix) -> bool
 
         Returns the inverse of this matrix.
+
+        REQ: matrix must be a square and not singular
         """
         det = self.determinant()
         if det == 0:
-            raise ValueError("matrix is not invertible")
-        return self.adjugate() * (1/det)
+            raise SingularMatrixError("matrix is not invertible")
+        return self.adjugate() * Fraction(1, det)
 
     # <!-- boolean operations -->
 
@@ -468,13 +524,23 @@ class Matrix(object):
         """
         return self._rows == self._cols
 
+    def is_symmetric(self):
+        """(Matrix) -> bool
+
+        Returns True iff this matrix is symmetric, i.e.
+            A == A^T
+        """
+        if self.is_square():
+            return self == self.transpose()
+        return False
+
     def is_singular(self):
         """(Matrix) -> bool
 
         Returns True iff this matrix is singular (not invertible).
         """
         if not self.is_square():
-            raise ValueError("matrix must be a square matrix")
+            raise MatrixDimensionError("matrix must be a square matrix")
         return self.determinant() == 0
 
     # <!-- complex operations -->
@@ -482,16 +548,18 @@ class Matrix(object):
     def solve_for_x(self, vector_b):
         """(Matrix, Vector) -> Vector
 
-        Returns the vector x given the vector b, such that the equation is satisfied:
+        Returns the vector x given the vector b, such that the following
+        equation is satisfied:
             Ax = b
 
         REQ: len(vector_b) == self.rows()
         """
         if self._rows != vector_b.dimension():
-            raise ValueError("vector must have same dimensions as this matrix's rows")
+            err_msg = "vector must have same dimensions as this matrix's rows"
+            raise MatrixDimensionError(err_msg)
         augmented = self.add_column(vector_b)
         rref = augmented.reduced_row_echelon_form()
-        return rref.column_vector(self._cols+1)
+        return rref.column_vector(self._cols + 1)
 
     def row_space(self):
         """(Matrix) -> set of Vector
@@ -499,7 +567,8 @@ class Matrix(object):
         Returns the basis of the row space of this matrix.
         """
         rref = self.reduced_row_echelon_form()
-        row_space = {self.row_vector(i+1) for i, row_v in enumerate(rref) if not row_v.is_zero()}
+        row_space = {self.row_vector(
+            i+1) for i, row_v in enumerate(rref) if not row_v.is_zero()}
         return row_space
 
     def column_space(self):
@@ -525,6 +594,7 @@ def examples():
     Displays examples of matrix operations.
     """
     mtx_a = Matrix([1, 1, 1], [0, 2, 5], [2, 5, -1])
+    mtx_a_inverse = mtx_a.inverse()
     vtr_b = Vector(6, -4, 27)
     vtr_x = mtx_a.solve_for_x(vtr_b)
 
@@ -537,7 +607,9 @@ def examples():
     print("\nMatrix transpose A^T:")
     print(mtx_a.transpose())
     print("\nMatrix inverse A^(-1):")
-    print(mtx_a.inverse())
+    print(mtx_a_inverse)
+    print("\nMatrix multiplication A^(-1)*A = I")
+    print(mtx_a_inverse * mtx_a)
     print("\nReduced row echelon form H ~ A:")
     print(mtx_a.reduced_row_echelon_form())
 

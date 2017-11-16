@@ -37,6 +37,9 @@ class Fraction(object):
             self._n = numerator
             self._d = denominator
 
+    def __hash__(self):
+        return (self._n, self._d, repr(self)).__hash__()
+
     @staticmethod
     def convert_int(integer, denominator=1):
         """(int[, int]) -> Fraction
@@ -126,9 +129,7 @@ class Fraction(object):
                 new_n = num1 + num2
             else:
                 new_d = Fraction._lcm(den1, den2)
-                mult1 = new_d // den2
-                mult2 = new_d // den1
-                new_n = num1 * mult1 + num2 * mult2
+                new_n = num1 * (new_d // den1) + num2 * (new_d // den2)
         elif isinstance(other, int):
             if other == 0:
                 return self
@@ -143,16 +144,16 @@ class Fraction(object):
         return self.__add__(other)
 
     def __mul__(self, other):
-        new_n = num = self._n
-        new_d = den = self._d
+        new_n = self._n
+        new_d = self._d
         if isinstance(other, Fraction):
-            new_n = num * other.numerator()
-            new_d = den * other.denominator()
+            new_n = self._n * other.numerator()
+            new_d = self._d * other.denominator()
         elif isinstance(other, int):
             if other == 1:
                 return self
             else:
-                new_n = num * other
+                new_n = self._n * other
         elif isinstance(other, float):
             return self.__mul__(Fraction.convert_float(other))
         return Fraction(new_n, new_d).simplify()
@@ -185,6 +186,12 @@ class Fraction(object):
             return self.decimal() ** exp.decimal()
         else:
             return self.decimal() ** exp
+
+    def __sub__(self, other):
+        return self.__add__(other.__neg__())
+
+    def __neg__(self):
+        return self.__mul__(-1)
 
     def __repr__(self):
         return "({}/{})".format(self._n, self._d)
