@@ -37,10 +37,10 @@ class Matrix(object):
         """
         if not columns:
             columns = rows
-        zero_m = list()
+        zero_mtx = list()
         for i in range(rows):
-            zero_m.append([0] * columns)
-        return Matrix(*zero_m)
+            zero_mtx.append([0] * columns)
+        return Matrix(*zero_mtx)
 
     @staticmethod
     def identity(rows):
@@ -48,10 +48,12 @@ class Matrix(object):
 
         Returns an identity matrix with the given dimensions.
         """
-        identity_m = list()
+        if rows < 1:
+            raise MatrixDimensionError("matrix must be at least of length 1")
+        identity_mtx = list()
         for i in range(rows):
-            identity_m.append([0]*i + [1] + [0]*(rows-i-1))
-        return Matrix(*identity_m)
+            identity_mtx.append([0]*i + [1] + [0]*(rows-i-1))
+        return Matrix(*identity_mtx)
 
     def __init__(self, *rows):
         """(Matrix, tuple of iterable) -> NoneType
@@ -60,9 +62,9 @@ class Matrix(object):
         """
         self._rows = len(rows)
         self._cols = len(rows[0])
-        self._m = list()
+        self._mtx = list()
         for row in rows:
-            self._m.append(list(row))
+            self._mtx.append(list(row))
 
     def __hash__(self):
         row_vector_hashes = list()
@@ -71,19 +73,19 @@ class Matrix(object):
         return hash(tuple(row_vector_hashes))
 
     def __repr__(self):
-        str_m = str(self._m)[1:-1]
-        return "M({})".format(str_m)
+        str_mtx = str(self._mtx)[1:-1]
+        return "M({})".format(str_mtx)
 
     def __str__(self):
-        str_m = list()
-        for row in self._m:
+        str_mtx = list()
+        for row in self._mtx:
             str_row = list(map(str, row))
-            str_m.append(" ".join(str_row))
-        return "\n".join(str_m)
+            str_mtx.append(" ".join(str_row))
+        return "\n".join(str_mtx)
 
     def __iter__(self):
         row_vectors_list = list()
-        for row in self._m:
+        for row in self._mtx:
             row_vectors_list.append(Vector(*row))
         return iter(row_vectors_list)
 
@@ -125,7 +127,7 @@ class Matrix(object):
             if not self._rows == other.columns():
                 err_msg = "matrices must have opposite dimensions"
                 raise MatrixDimensionError(err_msg)
-            row_vectors_a = [Vector(*row) for row in self._m]
+            row_vectors_a = [Vector(*row) for row in self._mtx]
             col_vectors_b = [other.column_vector(
                 i+1) for i in range(other.columns())]
             for row_vector in row_vectors_a:
@@ -141,7 +143,7 @@ class Matrix(object):
             return Vector(*prod_v)
         # scalar multiplication
         else:
-            for row in self._m:
+            for row in self._mtx:
                 row_vector = Vector(*row)
                 prod_m.append(row_vector * other)
         return Matrix(*prod_m)
@@ -223,9 +225,9 @@ class Matrix(object):
         REQ: 1 <= col_pos <= self.columns()
         """
         if by_index:
-            return self._m[row_pos][col_pos]
+            return self._mtx[row_pos][col_pos]
         else:
-            return self._m[row_pos-1][col_pos-1]
+            return self._mtx[row_pos-1][col_pos-1]
 
     def row_vector(self, position):
         """(Matrix, int) -> Vector
@@ -234,7 +236,7 @@ class Matrix(object):
 
         REQ: 1 <= position <= self.rows()
         """
-        return Vector(*self._m[position-1])
+        return Vector(*self._mtx[position-1])
 
     def column_vector(self, position):
         """(Matrix, int) -> Vector
@@ -244,7 +246,7 @@ class Matrix(object):
         REQ: 1 <= position <= self.columns()
         """
         col_values = list()
-        for row in self._m:
+        for row in self._mtx:
             col_values.append(row[position-1])
         return Vector(*col_values)
 
@@ -271,7 +273,7 @@ class Matrix(object):
         """
         if len(row) != self._cols:
             raise MatrixDimensionError("incorrect number of values for row")
-        new_m = self._m.copy()
+        new_m = self._mtx.copy()
         if pos:
             new_m.insert(pos-1, row)
         else:
@@ -289,7 +291,7 @@ class Matrix(object):
         """
         if len(col) != self._rows:
             raise MatrixDimensionError("incorrect number of values for column")
-        new_m = [row.copy() for row in self._m]
+        new_m = [row.copy() for row in self._mtx]
         if pos:
             for i, value in enumerate(col):
                 new_m[i] = new_m[i][:pos-1] + [value] + new_m[i][pos-1:]
@@ -306,7 +308,7 @@ class Matrix(object):
 
         REQ: 1 <= pos <= self.rows()
         """
-        new_m = self._m.copy()
+        new_m = self._mtx.copy()
         new_m.pop(pos-1)
         return Matrix(*new_m)
 
@@ -318,7 +320,7 @@ class Matrix(object):
 
         REQ: 1 <= pos <= self.columns()
         """
-        new_m = [row.copy() for row in self._m]
+        new_m = [row.copy() for row in self._mtx]
         for i in range(self._rows):
             new_m[i] = new_m[i][:pos-1] + new_m[i][pos:]
         return Matrix(*new_m)
@@ -334,7 +336,7 @@ class Matrix(object):
         """
         if pos1 == pos2:
             return self
-        row_vectors = [row for row in self._m]
+        row_vectors = [row for row in self._mtx]
         temp = row_vectors[pos1-1]
         row_vectors[pos1-1] = row_vectors[pos2-1]
         row_vectors[pos2-1] = temp
@@ -349,7 +351,7 @@ class Matrix(object):
         """
         if mult == 1:
             return self
-        row_vectors = [Vector(*row) for row in self._m]
+        row_vectors = [Vector(*row) for row in self._mtx]
         row_vectors[pos-1] *= mult
         return Matrix(*row_vectors)
 
@@ -360,7 +362,7 @@ class Matrix(object):
 
         REQ: 1 <= pos1, pos2 <= self.rows()
         """
-        row_vectors = [Vector(*row) for row in self._m]
+        row_vectors = [Vector(*row) for row in self._mtx]
         row_vectors[pos1-1] += row_vectors[pos2-1] * mult2
         return Matrix(*row_vectors)
 
@@ -463,7 +465,8 @@ class Matrix(object):
             det = self.get(1, 1)*self.get(2, 2) - self.get(1, 2)*self.get(2, 1)
         else:
             for cindex in range(self._cols):
-                det += self.get(1, cindex+1) * self.cofactor(1, cindex+1)
+                if self.get(1, cindex+1) != 0:
+                    det += self.get(1, cindex+1) * self.cofactor(1, cindex+1)
         return det
 
     def minor(self, row_pos, col_pos):
@@ -622,7 +625,7 @@ def examples():
     print(vtr_x)
 
     print(
-        # end of example
+        # end of examples
     )
 
 

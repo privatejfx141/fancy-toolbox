@@ -51,6 +51,10 @@ class Vector(object):
         return "V{}".format(str(self._v))
 
     def __abs__(self):
+        """(Vector) -> Number
+
+        See norm().
+        """
         return self.norm()
 
     def __add__(self, other):
@@ -262,6 +266,10 @@ def examples():
     print(vect_v.angle(vect_u), "radians")
     print("\nCross product vxu:")
     print(vect_v.cross_product(vect_u))
+
+    print(
+        # end of examples
+    )
 
 
 if __name__ == "__main__":

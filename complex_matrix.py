@@ -93,7 +93,7 @@ def examples():
     print(mtx_a.hermitian_adjoint())
 
     print(
-        # end of example
+        # end of examples
     )
 
 

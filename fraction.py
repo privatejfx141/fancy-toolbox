@@ -93,8 +93,13 @@ class Fraction(object):
         if isinstance(other, int):
             return self._n == other * self._d
         elif isinstance(other, Fraction):
-            identical = self._n == other.numerator() and self._d == other.denominator()
-            return identical or self.simplify() == other.simplify()
+            if self._d == other.denominator():
+                return self._n == other.numerator()
+            simp_self = self.simplify()
+            simp_other = other.simplify()
+            same_n = simp_self.numerator() == simp_other.numerator()
+            same_d = simp_self.denominator() == simp_other.denominator()
+            return same_n and same_d
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -169,8 +174,14 @@ class Fraction(object):
         elif isinstance(other, float):
             return self.__mul__(Fraction.convert_float(other).reciprocal())
 
+    def __rdiv__(self, other):
+        return (self.reciprocal()).__mul__(other)
+
     def __floordiv__(self, other):
         return self.__div__(other)
+
+    def __rfloordiv__(self, other):
+        return self.__rdiv__(other)
 
     def __pow__(self, exp):
         if isinstance(exp, int):
@@ -189,6 +200,9 @@ class Fraction(object):
 
     def __sub__(self, other):
         return self.__add__(other.__neg__())
+
+    def __rsub__(self, other):
+        return -self.__sub__(other)
 
     def __neg__(self):
         return self.__mul__(-1)
@@ -280,11 +294,76 @@ class Fraction(object):
         return Fraction(new_n, denominator)
 
 
-if __name__ == '__main__':
-    a = Fraction(-3, 5)
-    b = Fraction(7, 3)
-    b2 = b.set_denominator(2)
-    print(b, "=", b2)
-    print(b.decimal(), b2.decimal())
+def examples():
+    """() -> NoneType
 
-    print(1 * Fraction(3, 2))
+    Displays examples of fraction operations.
+    """
+    frac_a = Fraction(2, 4)
+    frac_b = Fraction(5, 7)
+    frac_b_recip = frac_b.reciprocal()
+    int_c = int(3)
+
+    # single fraction operations
+    print("\n> Unary fraction operations")
+    print("-" * 40)
+    print("\nFraction a:")
+    print(frac_a)
+    print("\nNegation -a:")
+    print((-frac_a).set_denominator(4))
+    print("\nDecimal value:")
+    print(frac_a.decimal())
+    print("\nReciprocal:")
+    print(frac_a.reciprocal())
+    print("\nSimplest terms:")
+    print(frac_a.simplify())
+    print("\nSet denominator = 7:")
+    print(frac_a.set_denominator(7))
+
+    # binary fraction operations
+    print("\n> Binary fraction operations")
+    print("-" * 40)
+    print("\nFraction a:")
+    print(frac_a)
+    print("\nFraction b:")
+    print(frac_b)
+    print("\nFraction addition a + b:")
+    print(frac_a, "+", frac_b, "=", frac_a + frac_b)
+    print("\nFraction subtraction a - b:")
+    print(frac_a, "-", frac_b, "=", frac_a - frac_b)
+    print("\nFraction subtraction b - a:")
+    print(frac_b, "-", frac_a, "=", frac_b - frac_a)
+    print("\nFraction multiplication a * b:")
+    print(frac_a, "x", frac_b, "=", frac_a * frac_b)
+    print("\nFraction division a / b:")
+    print(frac_a, "/", frac_b, "=", frac_a // frac_b)
+    print("\nFraction division b / a:")
+    print(frac_b, "/", frac_a, "=", frac_b // frac_a)
+
+    # fraction-integer operations
+    print("\n> Fraction-integer operations")
+    print("-" * 40)
+    print("\nFraction b:")
+    print(frac_b)
+    print("\nInteger c:")
+    print(int_c)
+    print("\nAddition b + c:")
+    print(frac_b, "+", int_c, "=", frac_b + int_c)
+    print("\nSubtraction b - c:")
+    print(frac_b, "-", int_c, "=", frac_b - int_c)
+    print("\nSubtraction c - b:")
+    print(int_c, "-", frac_b, "=", int_c - frac_b)
+    print("\nMultiplication b * c:")
+    print(frac_b, "*", int_c, "=", frac_b * int_c)
+    print("\nDivision b / c:")
+    print(frac_b, "/", int_c, "=", frac_b // int_c)
+    print("\nDivision c / b:")
+    print(int_c, "/", frac_b, "=", int_c // frac_b)
+
+    print(
+        # end of examples
+    )
+
+
+if __name__ == '__main__':
+    examples()
